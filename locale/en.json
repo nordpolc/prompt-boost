@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Prompt boost",
-    "description": "Adds an enhance button to the composer tool row: pick a persona (product, engineer, ops, data, design, marketing, content, project, finance, sales, legal, coach, custom, or auto), then rewrite the draft in that seat's style with your saved context; the context is editable in the menu and kept in this browser only. One-click revert to the draft it replaced."
+    "description": "Adds a persona-aware enhance-prompt button to the composer tool row: pick a persona (product, engineering, ops, data, design, marketing, content, project, finance, sales, legal, training, custom, or auto), and the draft is rewritten in that seat's habits. Only the persona and task constraints are used — never your name, company or job title; the constraints stay in this browser, and one click reverts."
   },
   "title": "Enhance prompt",
   "busy": "Enhancing…",
@@ -11,8 +11,8 @@
   "revertHint": "Restore the draft from before the enhancement",
   "persona": "Persona",
   "personaHint": "What this request needs, not just how it is worded",
-  "context": "My context",
-  "contextHint": "Sent with every enhancement so the rewrite can fill in your defaults. Stored in this browser only.",
+  "context": "Task constraints",
+  "contextHint": "Task facts only: budget, platform, length, deadline. No name, company or job title — those never reach the result. Stored in this browser only.",
   "contextEdit": "Edit",
   "contextHide": "Hide",
   "contextReset": "Reset",

@@ -52,11 +52,10 @@ window.__ModuleLoader__.load({
 
     /** What every enhancement request carries when the author has not edited it. */
     const DEFAULT_CONTEXT = [
-      '我在威高骨科做管理培训生；此外还自己在做站点、插件和各种试验，也在学新东西——身份不止一个，别按岗位标签把我归类。',
-      '我要能直接用的结果：结论先行、步骤可执行、有验收；不要空话、套路过渡和防御性免责。',
-      '中文交付；Word 全文宋体；PPT 保留可编辑；表格先定口径。',
-      '方案先算成本与收益，零成本、不占服务器流量常是硬约束；能复用现成方案就不自建。',
-      '服务器是 Ubuntu 云主机（Caddy + systemd），改配置要备份、验证、写运维记录。',
+      '要能直接用的结果：结论先行、步骤可执行、有验收；不要空话、套路过渡和防御性免责。',
+      '方案先算成本与收益；能复用现成方案就不自建。',
+      '中文交付；成稿按交付物要求给格式，表格先定口径。',
+      '不写我的姓名、公司、岗位和经历：人格只决定专业口径。',
     ].join('\n');
 
     function copyOf(lang) {
@@ -69,10 +68,10 @@ window.__ModuleLoader__.load({
         revertHint: lang === 'en' ? 'Restore the draft from before the enhancement' : '回退到增强前的草稿',
         persona: lang === 'en' ? 'Persona' : '人格',
         personaHint: lang === 'en' ? 'What this request needs, not just how it is worded' : '决定补什么，不只是怎么排版',
-        context: lang === 'en' ? 'My context' : '我的语境',
+        context: lang === 'en' ? 'Task constraints' : '任务约束',
         contextHint: lang === 'en'
-          ? 'Your own words, sent with every enhancement so the rewrite can fill in the defaults. Edit freely; stored in this browser only.'
-          : '用你自己的话写，随便改：每次增强都带上，用来补默认值。只存在本机浏览器。',
+          ? 'Task facts only: budget, platform, length, deadline. No name, company or job title — those are never written into the result. Stored in this browser only.'
+          : '只写这次任务的事实：预算、平台、字数、期限。不写姓名、公司、岗位——这些不会出现在成稿里。只存在本机浏览器。',
         contextEdit: lang === 'en' ? 'Edit' : '编辑',
         contextHide: lang === 'en' ? 'Hide' : '收起',
         contextReset: lang === 'en' ? 'Reset' : '恢复默认',
