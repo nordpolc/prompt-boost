@@ -9,6 +9,8 @@
 import { strict as assert } from 'node:assert';
 import { EventEmitter } from 'node:events';
 import { readFile } from 'node:fs/promises';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -116,12 +118,12 @@ async function callRoute(route, options) {
   return { res, payload: res.body === '' ? null : JSON.parse(res.body) };
 }
 
-await test('host: registers exactly one exact route and removes it on dispose', async () => {
+await test('host: registers the enhance route and the workspace route, and drops both on dispose', async () => {
   const { ctx, routes, disposers } = hostContext();
   host.apply(ctx);
-  assert.equal(routes.length, 1);
-  assert.equal(routes[0].kind, 'exact');
-  assert.equal(routes[0].path, '/prompt-boost/enhance');
+  assert.equal(routes.length, 2);
+  assert.deepEqual(routes.map((route) => route.path).sort(), ['/prompt-boost/enhance', '/prompt-boost/workspace']);
+  for (const route of routes) assert.equal(route.kind, 'exact');
   for (const dispose of disposers) dispose?.();
   assert.equal(routes.length, 0);
 });
@@ -741,6 +743,56 @@ await test('client: keeps an emptied context off instead of restoring the defaul
   tree = render(hooks, registration.component, props);
   assert.equal(store.get('dsh.prompt-boost.context'), '');
   assert.equal(findByClass(tree, 'dsh-pb-context-state').children[0], '未启用');
+});
+
+await test('host: answers the workspace route with facts from a real directory', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'pb-ws-'));
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'demo-app', scripts: { dev: 'vite', test: 'node t.js' } }));
+  try {
+    const { ctx, routes } = hostContext();
+    host.apply(ctx);
+    const workspace = routes.find((route) => route.path === '/prompt-boost/workspace');
+    const { res, payload } = await callRoute(workspace, { method: 'GET' });
+    assert.equal(res.statusCode, 200);
+    assert.equal(payload.ok, true);
+    assert.ok(String(payload.summary).length > 0, 'a summary line is expected');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+await test('host: the workspace route refuses a method other than GET', async () => {
+  const { ctx, routes } = hostContext();
+  host.apply(ctx);
+  const workspace = routes.find((route) => route.path === '/prompt-boost/workspace');
+  const { res } = await callRoute(workspace, { method: 'POST' });
+  assert.equal(res.statusCode, 405);
+});
+
+await test('host: puts workspace clues into the system prompt when given a project', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'pb-ws-'));
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'demo-app', scripts: { dev: 'vite' } }));
+  writeFileSync(join(dir, 'Dockerfile'), 'FROM node:22');
+  try {
+    const { ctx, routes } = hostContext();
+    host.apply(ctx);
+    await callRoute(routes[0], { body: JSON.stringify({ text: 'x', persona: 'engineer', workspace: dir }) });
+    const system = ctx.lastStream.system;
+    assert.ok(system.includes('【工作区线索】'), 'clue block missing');
+    assert.ok(system.includes('Node'), 'stack not detected');
+    assert.ok(system.includes('Docker'), 'marker file not detected');
+    assert.ok(system.includes('name=demo-app'), 'manifest facts missing');
+    assert.ok(system.includes('没列出的一律不知道'), 'clues are not fenced as facts');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+await test('host: omits the clue block entirely when no project is found', async () => {
+  const { ctx, routes } = hostContext();
+  host.apply(ctx);
+  await callRoute(routes[0], { body: JSON.stringify({ text: 'x', workspace: '/nonexistent-path-for-tests' }) });
+  assert.ok(!ctx.lastStream.system.includes('【工作区线索】'));
 });
 
 console.log(`\n${passes.length} passed, ${failures.length} failed`);

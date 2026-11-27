@@ -9,6 +9,7 @@
  */
 
 import { personaById, personaBrief } from './personas.js';
+import { workspaceHints } from './workspace.js';
 
 /** Reasoning levels a provider may advertise, cheapest first. */
 const REASONING_LEVEL_ORDER = ['off', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
@@ -36,6 +37,9 @@ const MAX_BODY_BYTES = 256 * 1024;
 
 const ROUTE = '/prompt-boost/enhance';
 
+/** Read-only route that tells the client which workspace clues a request would carry. */
+const WORKSPACE_ROUTE = '/prompt-boost/workspace';
+
 /**
  * The rules every persona shares. The persona brief says what to fill in; this
  * says what must survive the rewrite and where prediction stops being fact.
@@ -50,7 +54,8 @@ const BASE_PROMPT = [
   '2b. 成稿里不出现作者的个人信息：姓名、公司、岗位、所在地、个人经历、联系方式。人格只决定专业口径与判断标准，不是身份标签；需要指代作者时用「我」，不写「作为某某公司的某某」。',
   '3. 草稿是问题时，增强后仍是问题：要求给结论、理由与代价，不要预设答案。',
   '4. 不要反问作者。缺关键信息时，选语境里最可能的默认值写进去，并在结尾的【默认前提】里说明。',
-  '5. 不写模板腔：不要机械套用「背景 / 目标 / 要求 / 交付」四段；缺什么补什么，草稿已经清楚的不要换个说法重写。',
+  '5. 结构靠信息不靠标题：成稿必须让对方知道三件事——谁在执行（角色与专业口径）、受什么约束（必须做到、明确禁止、边界与验收）、交出什么（格式、粒度、是否需要文件或命令）。',
+  '5b. 但不要写成「角色 / 约束 / 输出格式」这种标题模板，也不要套「背景 / 目标 / 要求 / 交付」四段：把这三件事融进自然段落，草稿已经讲清的不要换个说法重写。角色是这次任务要扮演的岗位，不等于作者本人；作者身份一律不写。',
   '6. 压缩而非稀释：成稿通常是草稿的 1.5–3 倍，中文不超过 800 字；一句话草稿不要膨胀成两千字。',
   '7. 成稿用中文（草稿是英文则用英文），口吻是作者本人在对代理说话。',
   '8. 只输出成稿。不要前言、解释、markdown 围栏，也不要说你做了什么。',
@@ -62,9 +67,10 @@ const BASE_PROMPT = [
  * @param persona - the resolved persona.
  * @param context - the author's standing context, or ''.
  * @param brief - the author's own requirement for the custom persona, or ''.
+ * @param hints - factual clues about the workspace the draft lives in, or ''.
  * @returns the system prompt.
  */
-function systemPromptOf(persona, context, brief) {
+function systemPromptOf(persona, context, brief, hints) {
   const section = context === ''
     ? '【任务约束】\n（作者没有填写任务约束。只按草稿本身推断，不要假设行业、公司、技术栈或作者身份。）'
     : [
@@ -82,6 +88,14 @@ function systemPromptOf(persona, context, brief) {
         own,
         '按它补全；与人格默认冲突时以这段为准。',
       ].join('\n');
+  const hintSection = hints === ''
+    ? ''
+    : [
+        '',
+        '【工作区线索】',
+        hints,
+        '这些是从项目里读出的事实线索，用来选对技术栈与命令；没列出的一律不知道，不要假设文件、依赖或配置存在。',
+      ].join('\n');
   const seat = persona.id === 'auto'
     ? '【本次人格：自动（按草稿判断属于哪个职业）】'
     : `【本次人格：${persona.zh.name}】`;
@@ -91,6 +105,7 @@ function systemPromptOf(persona, context, brief) {
     seat,
     personaBrief(persona),
     ownSection,
+    hintSection,
     '',
     section,
     '',
@@ -261,7 +276,7 @@ async function userMessage(text) {
  * @param context - the author's standing context, or ''.
  * @returns the rewritten prompt.
  */
-async function enhance(ctx, text, persona, context, brief) {
+async function enhance(ctx, text, persona, context, brief, hints) {
   const llm = ctx.get('llm');
   if (llm === undefined) throw Object.assign(new Error('the harness LLM service is unavailable'), { status: 503 });
   const route = defaultRoute(ctx);
@@ -279,7 +294,7 @@ async function enhance(ctx, text, persona, context, brief) {
     provider: route.provider,
     model: route.model,
     messages: [await userMessage(text)],
-    system: systemPromptOf(persona, context, brief),
+    system: systemPromptOf(persona, context, brief, hints),
     maxTokens: MAX_TOKENS,
     signal: AbortSignal.timeout(TIMEOUT_MS),
     ...(effort === undefined ? {} : { reasoningEffort: effort }),
@@ -341,14 +356,36 @@ export function apply(ctx) {
       const persona = personaById(body?.persona);
       const context = typeof body?.context === 'string' ? body.context.trim().slice(0, MAX_CONTEXT_CHARS) : '';
       const brief = typeof body?.brief === 'string' ? body.brief.trim().slice(0, MAX_BRIEF_CHARS) : '';
+      const hints = await workspaceHints(typeof body?.workspace === 'string' ? body.workspace : '');
 
       try {
-        const enhanced = await enhance(ctx, text, persona, context, brief);
-        sendJson(res, 200, { ok: true, text: enhanced, persona: persona.id });
+        const enhanced = await enhance(ctx, text, persona, context, brief, hints.text);
+        sendJson(res, 200, { ok: true, text: enhanced, persona: persona.id, workspace: hints.root });
       } catch (error) {
         const status = error?.status ?? (error?.name === 'AbortError' ? 504 : 500);
         sendJson(res, status, { ok: false, error: { message: String(error?.message ?? error) } });
       }
     },
   }), 'prompt-boost: enhance route');
+
+  ctx.effect(() => ctx.webServer.register({
+    kind: 'exact',
+    path: WORKSPACE_ROUTE,
+    handler: async (req, res) => {
+      const rejection = ctx.connection.requestRejection(req);
+      if (rejection !== undefined) {
+        res.statusCode = rejection;
+        res.end();
+        return;
+      }
+      if (req.method !== 'GET') {
+        res.statusCode = 405;
+        res.setHeader('allow', 'GET');
+        res.end();
+        return;
+      }
+      const hints = await workspaceHints('');
+      sendJson(res, 200, { ok: true, root: hints.root, summary: hints.lines[0] ?? '' });
+    },
+  }), 'prompt-boost: workspace route');
 }

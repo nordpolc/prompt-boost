@@ -20,6 +20,7 @@ window.__ModuleLoader__.load({
 
     const NS = 'prompt-boost';
     const SLOT = 'conversation.input.right';
+    const WORKSPACE_ROUTE = '/prompt-boost/workspace';
     const ROUTE = 'prompt-boost/enhance';
     const PERSONA_KEY = 'dsh.prompt-boost.persona';
     const CONTEXT_KEY = 'dsh.prompt-boost.context';
@@ -76,6 +77,9 @@ window.__ModuleLoader__.load({
         contextHide: lang === 'en' ? 'Hide' : '收起',
         contextReset: lang === 'en' ? 'Reset' : '恢复默认',
         contextEmpty: lang === 'en' ? 'Off' : '未启用',
+        hintLabel: lang === 'en' ? 'Workspace clues: ' : '工作区线索：',
+        hintReading: lang === 'en' ? 'reading…' : '读取中…',
+        hintNone: lang === 'en' ? 'none found' : '没识别到项目',
         brief: lang === 'en' ? 'This request needs' : '这次要补什么',
         briefHint: lang === 'en'
           ? 'Your own instruction for this seat, stored in this browser only.'
@@ -257,6 +261,7 @@ window.__ModuleLoader__.load({
       '.dsh-pb-item-hint{font-size:11px;line-height:15px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       '.dsh-pb-check{flex:none;display:grid;place-items:center;width:16px;color:var(--dsw-alias-brand-primary)}',
       '.dsh-pb-menu-foot{margin-top:6px;padding:6px 4px 2px;border-top:1px solid var(--dsw-alias-border-l2)}',
+      '.dsh-pb-hint{display:block;box-sizing:border-box;padding:2px 6px 6px;font-size:11px;line-height:15px;opacity:.68;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       '.dsh-pb-context-toggle{display:flex;width:100%;box-sizing:border-box;align-items:center;justify-content:space-between;gap:8px;padding:6px 6px;border:none;border-radius:8px;background:transparent;color:inherit;cursor:pointer;font:inherit;font-size:12px;line-height:16px}',
       '.dsh-pb-context-toggle:hover{background:var(--dsw-alias-interactive-bg-hover-solid)}',
       '.dsh-pb-context-state{font-size:11px;opacity:.55}',
@@ -305,6 +310,7 @@ window.__ModuleLoader__.load({
           const [menuOpen, setMenuOpen] = useState(false);
           const [contextOpen, setContextOpen] = useState(false);
           const [menuAt, setMenuAt] = useState({ left: 8, bottom: 64 });
+          const [hints, setHints] = useState(null);
           const buttonRef = useRef(null);
           const caretRef = useRef(null);
           const menuRef = useRef(null);
@@ -324,6 +330,19 @@ window.__ModuleLoader__.load({
 
           /* A fixed menu over a composer: close it the way the rest of the app
              does, on an outside press or Escape, rather than on hover-out. */
+          useEffect(() => {
+            if (!menuOpen || hints !== null) return undefined;
+            let cancelled = false;
+            fetch(routeUrl(WORKSPACE_ROUTE), { credentials: 'same-origin' })
+              .then((response) => (response.ok ? response.json() : null))
+              .then((data) => {
+                if (cancelled || !data || data.ok !== true) return;
+                setHints({ root: data.root, summary: data.summary });
+              })
+              .catch(() => undefined);
+            return () => { cancelled = true; };
+          }, [menuOpen, hints]);
+
           useEffect(() => {
             if (!menuOpen) return undefined;
             const onDown = (event) => {
@@ -542,7 +561,12 @@ window.__ModuleLoader__.load({
           },
           h('div', { className: 'dsh-pb-menu-head' }, h('span', null, t('persona')), h('small', null, t('personaHint'))),
           items,
-          h('div', { className: 'dsh-pb-menu-foot' }, briefBody, contextToggle, contextBody)) : null;
+          h('div', { className: 'dsh-pb-menu-foot' },
+            h('div', { className: 'dsh-pb-hint', title: hints && hints.root ? hints.root : '' },
+              `${t('hintLabel')}${hints && hints.summary ? hints.summary : (hints === null ? t('hintReading') : t('hintNone'))}`),
+            briefBody,
+            contextToggle,
+            contextBody)) : null;
 
           const revertLabel = t('revertHint');
           const revertButton = revertTarget === null ? null : h('button', {
