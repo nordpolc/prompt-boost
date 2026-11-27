@@ -247,10 +247,14 @@ window.__ModuleLoader__.load({
       '@keyframes dsh-pb-appear{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:none}}',
       '.dsh-pb-spin{animation:dsh-pb-rotate .9s linear infinite;transform-origin:50% 50%}',
       '@keyframes dsh-pb-rotate{to{transform:rotate(360deg)}}',
-      '.dsh-pb-menu{position:fixed;z-index:70;width:304px;max-width:calc(100vw - 16px);max-height:min(560px,calc(100vh - 96px));overflow-y:auto;padding:6px;border-radius:12px;background:var(--dsw-alias-bg-overlay);border:1px solid var(--dsw-alias-border-l2);box-shadow:0 14px 44px rgba(0,0,0,.26);animation:dsh-pb-rise .12s ease-out}',
+      '.dsh-pb-menu{position:fixed;z-index:2147482000;width:304px;max-width:calc(100vw - 16px);max-height:min(520px,calc(100vh - 96px));overflow-y:auto;overscroll-behavior:contain;padding:6px;border-radius:12px;background:var(--dsw-alias-bg-overlay);border:1px solid var(--dsw-alias-border-l2);box-shadow:0 14px 44px rgba(0,0,0,.26);animation:dsh-pb-rise .12s ease-out}',
       '@keyframes dsh-pb-rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}',
       '.dsh-pb-menu-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:4px 8px 6px;font-size:11px;line-height:14px;letter-spacing:.04em;text-transform:uppercase;opacity:.6}',
       '.dsh-pb-menu-head small{font-size:10.5px;letter-spacing:0;text-transform:none;opacity:.85;text-align:right}',
+            '.dsh-pb-menu-grid{width:min(392px,calc(100vw - 16px))}',
+      '.dsh-pb-menu-grid .dsh-pb-items{display:grid;grid-template-columns:1fr 1fr;gap:0 4px}',
+      '.dsh-pb-menu-grid .dsh-pb-item{padding:5px 6px}',
+      '.dsh-pb-menu-grid .dsh-pb-item-hint{font-size:10.5px;line-height:14px}',
       '.dsh-pb-item{display:flex;width:100%;box-sizing:border-box;gap:8px;align-items:center;padding:6px 8px;border:none;border-radius:8px;background:transparent;color:var(--dsw-alias-label-primary);text-align:left;cursor:pointer;font:inherit}',
       '.dsh-pb-item:hover{background:var(--dsw-alias-interactive-bg-hover-solid)}',
       '.dsh-pb-item:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:-2px}',
@@ -429,10 +433,27 @@ window.__ModuleLoader__.load({
               ? caretRef.current.getBoundingClientRect()
               : null;
             if (rect !== null && typeof window !== 'undefined') {
+              /* Fit the menu into the space that is actually visible: the composer
+                 owns the bottom of the screen and anything opening upward must not
+                 run under it, so pick the roomier side and cap the height there. */
               const width = 304;
-              const left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
-              const bottom = Math.max(8, window.innerHeight - rect.top + 6);
-              setMenuAt({ left, bottom });
+              const gap = 6;
+              const vp = typeof window.visualViewport === 'object' && window.visualViewport !== null
+                ? window.visualViewport
+                : null;
+              const vh = vp !== null ? vp.height : window.innerHeight;
+              const vw = vp !== null ? vp.width : window.innerWidth;
+              const left = Math.max(8, Math.min(rect.right - width, vw - width - 8));
+              const above = Math.max(0, rect.top - 8);
+              const below = Math.max(0, vh - rect.bottom - 8);
+              const wanted = 520;
+              if (above >= Math.min(wanted, 280) || above >= below) {
+                const maxHeight = Math.max(180, Math.min(wanted, above));
+                setMenuAt({ left, bottom: Math.max(8, vh - rect.top + gap), maxHeight });
+              } else {
+                const maxHeight = Math.max(160, Math.min(wanted, below));
+                setMenuAt({ left, top: Math.min(rect.bottom + gap, Math.max(8, vh - maxHeight - 8)), maxHeight });
+              }
             }
             setMenuOpen(true);
           };
@@ -554,13 +575,21 @@ window.__ModuleLoader__.load({
 
           const menu = menuOpen ? h('div', {
             ref: menuRef,
-            className: 'dsh-pb-menu',
+            className: typeof menuAt.maxHeight === 'number' && menuAt.maxHeight < 420
+              ? 'dsh-pb-menu dsh-pb-menu-grid'
+              : 'dsh-pb-menu',
             role: 'menu',
             'aria-label': `${t('persona')} · ${t('personaHint')}`,
-            style: { left: menuAt.left + 'px', bottom: menuAt.bottom + 'px' },
+            style: {
+              left: menuAt.left + 'px',
+              ...(typeof menuAt.top === 'number'
+                ? { top: menuAt.top + 'px' }
+                : { bottom: menuAt.bottom + 'px' }),
+              ...(typeof menuAt.maxHeight === 'number' ? { maxHeight: menuAt.maxHeight + 'px' } : {}),
+            },
           },
           h('div', { className: 'dsh-pb-menu-head' }, h('span', null, t('persona')), h('small', null, t('personaHint'))),
-          items,
+          h('div', { className: 'dsh-pb-items' }, items),
           h('div', { className: 'dsh-pb-menu-foot' },
             h('div', { className: 'dsh-pb-hint', title: hints && hints.root ? hints.root : '' },
               `${t('hintLabel')}${hints && hints.summary ? hints.summary : (hints === null ? t('hintReading') : t('hintNone'))}`),
