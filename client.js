@@ -34,17 +34,19 @@ window.__ModuleLoader__.load({
      * step by a smoke test that compares their ids.
      */
     const PERSONAS = [
-      { id: 'auto', zh: { name: '自动', hint: '按草稿判断用哪种人格', glyph: '自' }, en: { name: 'Auto', hint: 'Pick the seat from the draft', glyph: 'A' } },
-      { id: 'solution', zh: { name: '方案', hint: '可行性、选型、成本', glyph: '方' }, en: { name: 'Solution', hint: 'Feasibility, options, cost', glyph: 'S' } },
-      { id: 'engineer', zh: { name: '工程', hint: '代码、插件、排错', glyph: '工' }, en: { name: 'Engineer', hint: 'Code, plugins, debugging', glyph: 'E' } },
-      { id: 'ops', zh: { name: '运维', hint: '服务器、部署、清理', glyph: '运' }, en: { name: 'Ops', hint: 'Servers, deploys, cleanup', glyph: 'O' } },
-      { id: 'business', zh: { name: '经营', hint: '分析、汇报、口径', glyph: '经' }, en: { name: 'Business', hint: 'Analysis, reporting, metrics', glyph: 'B' } },
-      { id: 'docs', zh: { name: '文档', hint: 'Word、PPT、表格', glyph: '文' }, en: { name: 'Docs', hint: 'Word, slides, spreadsheets', glyph: 'D' } },
-      { id: 'copy', zh: { name: '文案', hint: '标题、介绍、对外说法', glyph: '案' }, en: { name: 'Copy', hint: 'Headlines, blurbs, public wording', glyph: 'W' } },
-      { id: 'ui', zh: { name: '界面', hint: '页面、视觉、交互', glyph: '界' }, en: { name: 'UI', hint: 'Pages, visual, interaction', glyph: 'U' } },
-      { id: 'research', zh: { name: '研究', hint: '资料、标准、核查', glyph: '研' }, en: { name: 'Research', hint: 'Sources, standards, verification', glyph: 'R' } },
-      { id: 'review', zh: { name: '审稿', hint: '挑错、验收、反方', glyph: '审' }, en: { name: 'Review', hint: 'Find faults, acceptance, dissent', glyph: 'V' } },
-      { id: 'coach', zh: { name: '带教', hint: '一步步教、检查点', glyph: '教' }, en: { name: 'Coach', hint: 'Step by step, with checkpoints', glyph: 'C' } },
+      { id: 'auto', zh: { name: '自动', hint: '按草稿判断该用哪个职业', glyph: '自' }, en: { name: 'Auto', hint: 'Pick the profession from the draft', glyph: 'A' } },
+      { id: 'product', zh: { name: '产品经理', hint: '需求、边界、验收', glyph: '产' }, en: { name: 'Product', hint: 'Needs, scope, acceptance', glyph: 'P' } },
+      { id: 'engineer', zh: { name: '研发工程师', hint: '代码、实现、排错', glyph: '研' }, en: { name: 'Engineer', hint: 'Code, implementation, debugging', glyph: 'E' } },
+      { id: 'ops', zh: { name: '运维工程师', hint: '部署、变更、故障', glyph: '维' }, en: { name: 'Ops', hint: 'Deploys, changes, incidents', glyph: 'O' } },
+      { id: 'data', zh: { name: '数据分析', hint: '口径、对比、结论', glyph: '数' }, en: { name: 'Data', hint: 'Definitions, baselines, findings', glyph: 'D' } },
+      { id: 'design', zh: { name: '设计师', hint: '层级、状态、一致性', glyph: '设' }, en: { name: 'Design', hint: 'Hierarchy, states, consistency', glyph: 'S' } },
+      { id: 'marketing', zh: { name: '市场运营', hint: '人群、渠道、指标', glyph: '运' }, en: { name: 'Marketing', hint: 'Audience, channels, metrics', glyph: 'M' } },
+      { id: 'content', zh: { name: '内容编辑', hint: '受众、渠道、发布', glyph: '文' }, en: { name: 'Content', hint: 'Readers, channel, publish', glyph: 'C' } },
+      { id: 'project', zh: { name: '项目经理', hint: '范围、进度、依赖', glyph: '项' }, en: { name: 'Project', hint: 'Scope, schedule, dependencies', glyph: 'J' } },
+      { id: 'finance', zh: { name: '财务', hint: '口径、成本、现金', glyph: '财' }, en: { name: 'Finance', hint: 'Basis, cost, cash', glyph: 'F' } },
+      { id: 'sales', zh: { name: '销售商务', hint: '客户、异议、成交', glyph: '销' }, en: { name: 'Sales', hint: 'Customer, objections, close', glyph: 'L' } },
+      { id: 'legal', zh: { name: '法务合规', hint: '依据、条款、风险', glyph: '法' }, en: { name: 'Legal', hint: 'Basis, clauses, exposure', glyph: 'G' } },
+      { id: 'coach', zh: { name: '培训教练', hint: '分步、练习、检查点', glyph: '教' }, en: { name: 'Coach', hint: 'Steps, practice, checkpoints', glyph: 'T' } },
       { id: 'custom', zh: { name: '自定义', hint: '按你写的要求补', glyph: '定' }, en: { name: 'Custom', hint: 'Follow the brief you wrote', glyph: 'X' } },
     ];
 

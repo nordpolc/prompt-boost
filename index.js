@@ -81,9 +81,13 @@ function systemPromptOf(persona, context, brief) {
         own,
         '按它补全；与人格默认冲突时以这段为准。',
       ].join('\n');
+  const seat = persona.id === 'auto'
+    ? '【本次人格：自动（按草稿判断属于哪个职业）】'
+    : `【本次人格：${persona.zh.name}】`;
   return [
     BASE_PROMPT,
     '',
+    seat,
     personaBrief(persona),
     ownSection,
     '',
