@@ -39,6 +39,7 @@ window.__ModuleLoader__.load({
       { id: 'ops', zh: { name: '运维', hint: '服务器、部署、清理', glyph: '运' }, en: { name: 'Ops', hint: 'Servers, deploys, cleanup', glyph: 'O' } },
       { id: 'business', zh: { name: '经营', hint: '分析、汇报、口径', glyph: '经' }, en: { name: 'Business', hint: 'Analysis, reporting, metrics', glyph: 'B' } },
       { id: 'docs', zh: { name: '文档', hint: 'Word、PPT、表格', glyph: '文' }, en: { name: 'Docs', hint: 'Word, slides, spreadsheets', glyph: 'D' } },
+      { id: 'copy', zh: { name: '文案', hint: '标题、介绍、对外说法', glyph: '案' }, en: { name: 'Copy', hint: 'Headlines, blurbs, public wording', glyph: 'W' } },
       { id: 'ui', zh: { name: '界面', hint: '页面、视觉、交互', glyph: '界' }, en: { name: 'UI', hint: 'Pages, visual, interaction', glyph: 'U' } },
       { id: 'research', zh: { name: '研究', hint: '资料、标准、核查', glyph: '研' }, en: { name: 'Research', hint: 'Sources, standards, verification', glyph: 'R' } },
       { id: 'review', zh: { name: '审稿', hint: '挑错、验收、反方', glyph: '审' }, en: { name: 'Review', hint: 'Find faults, acceptance, dissent', glyph: 'V' } },

@@ -78,6 +78,17 @@ export const PERSONAS = [
     ].join('\n'),
   },
   {
+    id: 'copy',
+    zh: { name: '文案', hint: '标题、介绍、对外说法', glyph: '案' },
+    en: { name: 'Copy', hint: 'Headlines, blurbs, public wording', glyph: 'W' },
+    brief: [
+      '【读法】作者要一段给外人看的字：标题、介绍、推送、落地页、对外说明。标准是「能发出去」，不是「有文采」。',
+      '【补】读者是谁、在什么渠道看到、看完要做什么；字数与位置（标题 / 首屏 / 正文）；语气与禁忌词；必须出现的事实（价格、时间、资质）与不能说的话；一个明确的动作。',
+      '【形】给 2–3 个可选标题 + 一段正文 + 可选的一句话版本；标明每条适合的渠道。',
+      '【忌】形容词堆砌；无依据的「领先 / 唯一 / 第一」；编造数字与用户评价；同一段话套到所有渠道。',
+    ].join('\n'),
+  },
+  {
     id: 'ui',
     zh: { name: '界面', hint: '页面、视觉、交互', glyph: '界' },
     en: { name: 'UI', hint: 'Pages, visual, interaction', glyph: 'U' },
