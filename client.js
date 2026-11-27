@@ -23,6 +23,7 @@ window.__ModuleLoader__.load({
     const ROUTE = 'prompt-boost/enhance';
     const PERSONA_KEY = 'dsh.prompt-boost.persona';
     const CONTEXT_KEY = 'dsh.prompt-boost.context';
+    const BRIEF_KEY = 'dsh.prompt-boost.brief';
 
     /* How many replaced drafts the revert stack keeps, newest last. */
     const MAX_UNDO = 8;
@@ -44,11 +45,12 @@ window.__ModuleLoader__.load({
       { id: 'research', zh: { name: '研究', hint: '资料、标准、核查', glyph: '研' }, en: { name: 'Research', hint: 'Sources, standards, verification', glyph: 'R' } },
       { id: 'review', zh: { name: '审稿', hint: '挑错、验收、反方', glyph: '审' }, en: { name: 'Review', hint: 'Find faults, acceptance, dissent', glyph: 'V' } },
       { id: 'coach', zh: { name: '带教', hint: '一步步教、检查点', glyph: '教' }, en: { name: 'Coach', hint: 'Step by step, with checkpoints', glyph: 'C' } },
+      { id: 'custom', zh: { name: '自定义', hint: '按你写的要求补', glyph: '定' }, en: { name: 'Custom', hint: 'Follow the brief you wrote', glyph: 'X' } },
     ];
 
     /** What every enhancement request carries when the author has not edited it. */
     const DEFAULT_CONTEXT = [
-      '我是企业运营管理岗（管培生），日常横跨经营分析、汇报文档、网站与服务器运维、DSH 插件开发。',
+      '我在威高骨科做管理培训生；此外还自己在做站点、插件和各种试验，也在学新东西——身份不止一个，别按岗位标签把我归类。',
       '我要能直接用的结果：结论先行、步骤可执行、有验收；不要空话、套路过渡和防御性免责。',
       '中文交付；Word 全文宋体；PPT 保留可编辑；表格先定口径。',
       '方案先算成本与收益，零成本、不占服务器流量常是硬约束；能复用现成方案就不自建。',
@@ -67,12 +69,19 @@ window.__ModuleLoader__.load({
         personaHint: lang === 'en' ? 'What this request needs, not just how it is worded' : '决定补什么，不只是怎么排版',
         context: lang === 'en' ? 'My context' : '我的语境',
         contextHint: lang === 'en'
-          ? 'Sent with every enhancement so the rewrite can fill in your defaults. Stored in this browser only.'
-          : '每次增强都会带上，用来补你的默认值。只存在本机浏览器。',
+          ? 'Your own words, sent with every enhancement so the rewrite can fill in the defaults. Edit freely; stored in this browser only.'
+          : '用你自己的话写，随便改：每次增强都带上，用来补默认值。只存在本机浏览器。',
         contextEdit: lang === 'en' ? 'Edit' : '编辑',
         contextHide: lang === 'en' ? 'Hide' : '收起',
         contextReset: lang === 'en' ? 'Reset' : '恢复默认',
         contextEmpty: lang === 'en' ? 'Off' : '未启用',
+        brief: lang === 'en' ? 'This request needs' : '这次要补什么',
+        briefHint: lang === 'en'
+          ? 'Your own instruction for this seat, stored in this browser only.'
+          : '你写给它照做的话，只存在本机浏览器。',
+        briefPlaceholder: lang === 'en'
+          ? 'e.g. only fill the numbers and the caveats; skip layout advice'
+          : '例：只补数据和口径，别给我排版建议',
       };
       for (const persona of PERSONAS) {
         const words = lang === 'en' ? persona.en : persona.zh;
@@ -125,6 +134,11 @@ window.__ModuleLoader__.load({
     function storedContext() {
       const value = readStored(CONTEXT_KEY);
       return value === null ? DEFAULT_CONTEXT : value;
+    }
+
+    function storedBrief() {
+      const value = readStored(BRIEF_KEY);
+      return value === null ? '' : value;
     }
 
     function SparkleIcon(props) {
@@ -245,6 +259,9 @@ window.__ModuleLoader__.load({
       '.dsh-pb-context-toggle{display:flex;width:100%;box-sizing:border-box;align-items:center;justify-content:space-between;gap:8px;padding:6px 6px;border:none;border-radius:8px;background:transparent;color:inherit;cursor:pointer;font:inherit;font-size:12px;line-height:16px}',
       '.dsh-pb-context-toggle:hover{background:var(--dsw-alias-interactive-bg-hover-solid)}',
       '.dsh-pb-context-state{font-size:11px;opacity:.55}',
+      '.dsh-pb-brief{padding:6px 0 2px;border-top:1px solid var(--dsw-alias-border-l2);margin-top:4px}',
+      '.dsh-pb-context-label{padding:0 6px 2px;font-size:11px;line-height:15px;font-weight:560}',
+      '.dsh-pb-brief-box{min-height:66px;max-height:140px}',
       '.dsh-pb-context-note{padding:0 6px 6px;font-size:11px;line-height:15px;opacity:.55}',
       '.dsh-pb-context{display:block;width:calc(100% - 12px);max-width:calc(100% - 12px);box-sizing:border-box;min-height:92px;max-height:190px;margin:0 6px;padding:7px 8px;border-radius:8px;border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-overlay);color:var(--dsw-alias-label-primary);font:inherit;font-size:11.5px;line-height:17px;resize:vertical}',
       '.dsh-pb-context:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:-2px}',
@@ -283,6 +300,7 @@ window.__ModuleLoader__.load({
           const [enhanced, setEnhanced] = useState(null);
           const [persona, setPersona] = useState(storedPersona);
           const [context, setContext] = useState(storedContext);
+          const [brief, setBrief] = useState(storedBrief);
           const [menuOpen, setMenuOpen] = useState(false);
           const [contextOpen, setContextOpen] = useState(false);
           const [menuAt, setMenuAt] = useState({ left: 8, bottom: 64 });
@@ -346,7 +364,7 @@ window.__ModuleLoader__.load({
               const response = await fetch(routeUrl(ROUTE), {
                 method: 'POST',
                 headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ text, persona, context: context.trim() }),
+                body: JSON.stringify({ text, persona, context: context.trim(), brief: brief.trim() }),
                 signal: controller.signal,
               });
               const payload = await response.json().catch(() => null);
@@ -408,6 +426,11 @@ window.__ModuleLoader__.load({
           const changeContext = (value) => {
             setContext(value);
             writeStored(CONTEXT_KEY, value);
+          };
+
+          const changeBrief = (value) => {
+            setBrief(value);
+            writeStored(BRIEF_KEY, value);
           };
 
           const resetContext = () => {
@@ -497,6 +520,18 @@ window.__ModuleLoader__.load({
               h('button', { type: 'button', className: 'dsh-pb-reset', onClick: resetContext }, t('contextReset'))),
           ] : null;
 
+          const briefBody = persona !== 'custom' ? null : h('div', { className: 'dsh-pb-brief' },
+            h('div', { className: 'dsh-pb-context-label' }, t('brief')),
+            h('div', { className: 'dsh-pb-context-note' }, t('briefHint')),
+            h('textarea', {
+              className: 'dsh-pb-context dsh-pb-brief-box',
+              value: brief,
+              spellCheck: false,
+              rows: 3,
+              placeholder: t('briefPlaceholder'),
+              onChange: (event) => changeBrief(event.target.value),
+            }));
+
           const menu = menuOpen ? h('div', {
             ref: menuRef,
             className: 'dsh-pb-menu',
@@ -506,7 +541,7 @@ window.__ModuleLoader__.load({
           },
           h('div', { className: 'dsh-pb-menu-head' }, h('span', null, t('persona')), h('small', null, t('personaHint'))),
           items,
-          h('div', { className: 'dsh-pb-menu-foot' }, contextToggle, contextBody)) : null;
+          h('div', { className: 'dsh-pb-menu-foot' }, briefBody, contextToggle, contextBody)) : null;
 
           const revertLabel = t('revertHint');
           const revertButton = revertTarget === null ? null : h('button', {

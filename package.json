@@ -1,6 +1,6 @@
 {
   "name": "@local/prompt-boost",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "type": "module",
   "description": "Adds a persona-aware enhance-prompt button to the composer tool row (with editable author context) and one-click revert to the draft it replaced.",

@@ -132,6 +132,17 @@ export const PERSONAS = [
       '【忌】跳步；只给结论不讲理由；一次灌完不留检查点；替作者做完。',
     ].join('\n'),
   },
+  {
+    id: 'custom',
+    zh: { name: '自定义', hint: '按你写的要求补', glyph: '定' },
+    en: { name: 'Custom', hint: 'Follow the brief you wrote', glyph: 'X' },
+    brief: [
+      '【读法】按作者写的「本次要求」执行，它盖过本插件的一切默认判断。',
+      '【补】只补要求里点到的字段；没点到的不要加戏。',
+      '【形】按要求的形状交付；没写形状就给最短的可执行版本。',
+      '【忌】把要求当风格建议忽略；要求与人格默认冲突时以要求为准。',
+    ].join('\n'),
+  },
 ];
 
 /** The ids the host accepts, in picker order. */
@@ -153,7 +164,7 @@ export function personaById(value) {
 /** Everything the rewriter needs to know about one seat. */
 export function personaBrief(persona) {
   if (persona.id !== 'auto') return `【本次人格：${persona.zh.name}】\n${persona.brief}`;
-  const seats = PERSONAS.filter((entry) => entry.id !== 'auto')
+  const seats = PERSONAS.filter((entry) => entry.id !== 'auto' && entry.id !== 'custom')
     .map((entry) => `— ${entry.id}（${entry.zh.name}）\n${entry.brief}`)
     .join('\n\n');
   return [`【本次人格：自动】`, persona.brief, '', '【可选人格】', seats].join('\n');
