@@ -13,13 +13,13 @@
 ### 1. 从 GitHub 装（推荐）
 
 ```bash
-dsh plugin --profile web add github:<你的账号>/prompt-boost
+dsh plugin --profile web add github:nordpolc/prompt-boost
 ```
 
 ### 2. 从本地目录装
 
 ```bash
-git clone https://github.com/<你的账号>/prompt-boost.git
+git clone https://github.com/nordpolc/prompt-boost.git
 cd prompt-boost
 dsh plugin --profile web add "file:$PWD"
 ./install.sh          # 校验装的是链接而不是副本，并提示重启

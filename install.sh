@@ -25,6 +25,14 @@ else
   say "1/3 没找到 dsh 命令，跳过 pnpm，改为手动接线"
 fi
 
+case "$HERE" in
+  */node_modules/*)
+    say "这个副本已经在 node_modules 里了：直接从仓库装的人不用再跑本脚本。"
+    say "只有「改源码、要让运行中的 DSH 读到你的改动」时才需要软链。"
+    exit 0
+    ;;
+esac
+
 say "2/3 校验加载的是源码而不是副本"
 mkdir -p "$PROFILE_DIR/node_modules"
 if [ -e "$PROFILE_DIR/node_modules/$BASE" ]; then
